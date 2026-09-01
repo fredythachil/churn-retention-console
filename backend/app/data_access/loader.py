@@ -1,12 +1,16 @@
 import csv
 import logging
 from pathlib import Path
+import os
 
 from app.models.customer import Customer
 
 logger = logging.getLogger(__name__)
 
-DATA_FILE = Path(__file__).resolve().parents[3] / "data" / "WA_Fn-UseC_-Telco-Customer-Churn.csv"
+DATA_FILE = Path(
+    os.getenv("DATA_FILE")
+    or Path(__file__).resolve().parents[3] / "data" / "WA_Fn-UseC_-Telco-Customer-Churn.csv"
+)
 
 
 def _to_bool(value: str) -> bool:
