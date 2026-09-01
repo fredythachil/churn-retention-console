@@ -1,0 +1,10 @@
+# notes
+NOTES.md
+
+# python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# notebooks
+.ipynb_checkpoints/
