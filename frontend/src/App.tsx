@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 import { CustomerListView } from "./views/CustomerListView";
+import { CustomerDetailView } from "./views/CustomerDetailView";
 
 export default function App() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -13,7 +14,7 @@ export default function App() {
       </header>
 
       {selectedId ? (
-        <div className="panel">Detail view for {selectedId} — coming next</div>
+        <CustomerDetailView customerId={selectedId} />
       ) : (
         <CustomerListView onSelect={setSelectedId} />
       )}
