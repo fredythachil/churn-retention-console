@@ -50,3 +50,15 @@ export function updateOutreach(
     },
   );
 }
+
+export interface CustomerStats {
+  total: number;
+  tiers: Record<string, number>;
+  stages: Record<string, number>;
+  contracts: Record<string, number>;
+  average_score: number;
+}
+
+export function getStats() {
+  return request<CustomerStats>("/customers/summary/stats");
+}

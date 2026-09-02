@@ -23,3 +23,4 @@ class Customer(BaseModel):
     monthly_charges: float
     total_charges: float
     churn: bool
+

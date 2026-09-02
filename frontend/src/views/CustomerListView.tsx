@@ -1,13 +1,17 @@
 import { useEffect, useState } from "react";
 
-import { listCustomers, type CustomerFilters } from "../api/customers";
-import { RiskBadge } from "../components/RiskBadge";
-import { ScoreBar } from "../components/ScoreBar";
-import { EmptyState, ErrorState, LoadingState } from "../components/StateMessage";
-import type { CustomerSummary, Page } from "../types/api";
-import { STAGE_LABELS } from "../types/labels";
+import { getStats, listCustomers, type CustomerFilters, type CustomerStats } from "../api/customers";
+import { EmptyState, ErrorState } from "../components/StateMessage";
+import { IconClock, IconContract, IconFlow, IconGauge, IconMoney, IconSearch, IconUser } from "../components/Icons";
+import { RiskTags } from "../components/RiskTags";
+import { OutreachPipeline } from "../components/OutreachPipeline";
+import { DonutPanel } from "../components/DonutPanel";
+import { PillBarPanel } from "../components/PillBarPanel";
+import { StageMini } from "../components/StageMini";
+import type { CustomerSummary, OutreachStage, Page, RiskTier } from "../types/api";
+import { STAGE_LABELS, TIER_LABELS } from "../types/labels";
 
-const PAGE_SIZE = 25;
+const PAGE_SIZE = 10;
 
 interface Props {
   onSelect: (customerId: string) => void;
@@ -26,6 +30,7 @@ export function CustomerListView({ onSelect }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<unknown>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const [stats, setStats] = useState<CustomerStats | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -63,6 +68,20 @@ export function CustomerListView({ onSelect }: Props) {
     };
   }, [page, tier, contract, stage, search, sortBy, descending, reloadKey]);
 
+  useEffect(() => {
+    let cancelled = false;
+    getStats()
+      .then((result) => {
+        if (!cancelled) setStats(result);
+      })
+      .catch(() => {
+        // Tiles are supplementary - the list still works without them.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [reloadKey]);
+
   function changeFilter(setter: (value: string) => void, value: string) {
     setter(value);
     setPage(1);
@@ -78,41 +97,119 @@ export function CustomerListView({ onSelect }: Props) {
     setPage(1);
   }
 
-  function sortIndicator(field: string) {
-    if (sortBy !== field) return "";
-    return descending ? " ↓" : " ↑";
+  // Always render an arrow so every column reads as sortable - dimmed when the
+  // column is not the active sort.
+  function SortArrow({ field }: { field: string }) {
+    const active = sortBy === field;
+    return (
+      <span className={`sort-arrow`}>
+        {active && !descending ? "↑" : "↓"}
+      </span>
+    );
+  }
+
+  const TIER_COLOUR: Record<string, string> = {
+    LOW: "var(--low)",
+    MEDIUM: "var(--medium)",
+    HIGH: "var(--high)",
+    CRITICAL: "var(--critical)",
+  };
+  
+  function pageNumbers(current: number, total: number): (number | "…")[] {
+    if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+    if (current <= 4) return [1, 2, 3, 4, 5, "…", total];
+    if (current >= total - 3) return [1, "…", total - 4, total - 3, total - 2, total - 1, total];
+    return [1, "…", current - 1, current, current + 1, "…", total];
   }
 
   return (
     <>
+      {stats && (
+        <div className="split-row">
+          <DonutPanel
+            title="Risk distribution"
+            caption="customers"
+            activeKey={tier}
+            onSliceClick={(next) => changeFilter(setTier, next)}
+            slices={[
+              { key: "CRITICAL", label: "Critical", value: stats.tiers.CRITICAL ?? 0, colour: "#dc2626" },
+              { key: "HIGH", label: "High", value: stats.tiers.HIGH ?? 0, colour: "#ea580c" },
+              { key: "MEDIUM", label: "Medium", value: stats.tiers.MEDIUM ?? 0, colour: "#d97706" },
+              { key: "LOW", label: "Low", value: stats.tiers.LOW ?? 0, colour: "#059669" },
+            ]}
+          />
+
+          <PillBarPanel
+            title="Contract mix"
+            activeKey={contract}
+            onSliceClick={(next) => changeFilter(setContract, next)}
+            slices={[
+              { key: "Month-to-month", label: "Month-to-month", value: stats.contracts["Month-to-month"] ?? 0, colour: "#dc2626" },
+              { key: "One year", label: "One year", value: stats.contracts["One year"] ?? 0, colour: "#d97706" },
+              { key: "Two year", label: "Two year", value: stats.contracts["Two year"] ?? 0, colour: "#059669" },
+            ]}
+          />
+
+          <OutreachPipeline
+            stats={stats}
+            activeStage={stage}
+            onStageClick={(next) => changeFilter(setStage, next)}
+          />
+        </div>
+      )}
+
+
       <div className="panel">
         <div className="filters">
-          <input
-            placeholder="Search customer ID…"
-            value={search}
-            onChange={(e) => changeFilter(setSearch, e.target.value)}
-            style={{ minWidth: 200 }}
-          />
-          <select value={tier} onChange={(e) => changeFilter(setTier, e.target.value)}>
-            <option value="">All risk tiers</option>
-            <option value="CRITICAL">Critical</option>
-            <option value="HIGH">High</option>
-            <option value="MEDIUM">Medium</option>
-            <option value="LOW">Low</option>
-          </select>
-          <select value={contract} onChange={(e) => changeFilter(setContract, e.target.value)}>
-            <option value="">All contracts</option>
-            <option value="Month-to-month">Month-to-month</option>
-            <option value="One year">One year</option>
-            <option value="Two year">Two year</option>
-          </select>
-          <select value={stage} onChange={(e) => changeFilter(setStage, e.target.value)}>
-            <option value="">All outreach stages</option>
-            <option value="NOT_CONTACTED">Not contacted</option>
-            <option value="IN_PROGRESS">In progress</option>
-            <option value="RETAINED">Retained</option>
-            <option value="LOST">Lost</option>
-          </select>
+          <div className="search-box">
+            <IconSearch />
+            <input
+              placeholder="Search customer ID…"
+              value={search}
+              onChange={(e) => changeFilter(setSearch, e.target.value)}
+            />
+            {search && (
+              <button className="search-clear" onClick={() => changeFilter(setSearch, "")}>
+                ×
+              </button>
+            )}
+          </div>
+
+          <div className="active-filters">
+            {tier && (
+              <span className="filter-pill">
+                {TIER_LABELS[tier as RiskTier] ?? tier} risk
+                <button onClick={() => changeFilter(setTier, "")}>×</button>
+              </span>
+            )}
+            {contract && (
+              <span className="filter-pill">
+                {contract}
+                <button onClick={() => changeFilter(setContract, "")}>×</button>
+              </span>
+            )}
+            {stage && (
+              <span className="filter-pill">
+                {STAGE_LABELS[stage as OutreachStage] ?? stage}
+                <button onClick={() => changeFilter(setStage, "")}>×</button>
+              </span>
+            )}
+            {(tier || contract || stage || search) && (
+              <button
+                className="clear-all"
+                onClick={() => {
+                  setTier("");
+                  setContract("");
+                  setStage("");
+                  setSearch("");
+                  setPage(1);
+                }}
+              >
+                × Clear all
+              </button>
+            )}
+          </div>
+
           {data && (
             <span className="muted" style={{ marginLeft: "auto" }}>
               {data.total.toLocaleString()} customers
@@ -121,67 +218,121 @@ export function CustomerListView({ onSelect }: Props) {
         </div>
       </div>
 
-      {error && (
-        <ErrorState error={error} onRetry={() => setReloadKey((k) => k + 1)} />
-      )}
+      {error && <ErrorState error={error} onRetry={() => setReloadKey((k) => k + 1)} />}
 
-      <div className="panel" style={{ opacity: loading ? 0.6 : 1 }}>
-        {!data && loading && <LoadingState />}
+      <div className="panel">
+        <div className="panel-head">
+          <h2>Call list</h2>
+          {data && <span className="ph-count">{data.total.toLocaleString()}</span>}
+        </div>
+
+        {!data && loading && (
+          <div>
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div className="skeleton" key={i} />
+            ))}
+          </div>
+        )}
+
         {data && data.items.length === 0 && (
           <EmptyState label="No customers match these filters." />
         )}
 
         {data && data.items.length > 0 && (
-          <table>
-            <thead>
-              <tr>
-                <th className="sortable" onClick={() => toggleSort("customer_id")}>
-                  Customer{sortIndicator("customer_id")}
-                </th>
-                <th className="sortable num" onClick={() => toggleSort("score")}>
-                  Risk{sortIndicator("score")}
-                </th>
-                <th>Tier</th>
-                <th>Contract</th>
-                <th className="sortable num" onClick={() => toggleSort("tenure")}>
-                  Tenure{sortIndicator("tenure")}
-                </th>
-                <th className="sortable num" onClick={() => toggleSort("monthly_charges")}>
-                  Monthly{sortIndicator("monthly_charges")}
-                </th>
-                <th>Outreach</th>
-              </tr>
-            </thead>
-            <tbody>
+          <div style={{ opacity: loading ? 0.55 : 1, transition: "opacity 0.2s" }}>
+            <div className="rows-scroll">
+              <div className="row-head">
+                <span />
+                <span className="sortable" onClick={() => toggleSort("customer_id")}>
+                  <IconUser />Customer<SortArrow field="customer_id" />
+                </span>
+                <span>Drivers</span>
+                <span className="sortable" onClick={() => toggleSort("score")}>
+                  <IconGauge />Risk score<SortArrow field="score" />
+                </span>
+                <span className="sortable" onClick={() => toggleSort("contract")}>
+                  <IconContract />Contract<SortArrow field="contract" />
+                </span>
+                <span className="sortable center" onClick={() => toggleSort("tenure")}>
+                  <IconClock />Tenure<SortArrow field="tenure" />
+                </span>
+                <span className="sortable center" onClick={() => toggleSort("monthly_charges")}>
+                  <IconMoney />Monthly<SortArrow field="monthly_charges" />
+                </span>
+                <span className="sortable center" onClick={() => toggleSort("outreach_stage")}>
+                  <IconFlow />Outreach<SortArrow field="outreach_stage" />
+                </span>
+              </div>
+              <div className="rows">
               {data.items.map((customer) => (
-                <tr key={customer.customer_id} onClick={() => onSelect(customer.customer_id)}>
-                  <td>{customer.customer_id}</td>
-                  <td><ScoreBar score={customer.score} tier={customer.tier} /></td>
-                  <td><RiskBadge tier={customer.tier} /></td>
-                  <td>{customer.contract}</td>
-                  <td className="num">{customer.tenure} mo</td>
-                  <td className="num">${customer.monthly_charges.toFixed(2)}</td>
-                  <td>
-                    <span className="badge badge-stage">
-                      {STAGE_LABELS[customer.outreach_stage]}
+                <div
+                  className="row"
+                  key={customer.customer_id}
+                  onClick={() => onSelect(customer.customer_id)}
+                >
+                  <div
+                    className="row-mark"
+                    style={{ background: TIER_COLOUR[customer.tier] }}
+                  />
+                  <div className="row-id">{customer.customer_id}</div>
+                  <div><RiskTags factors={customer.top_factors} /></div>
+                  <div className="score-cell">
+                    <span className="score-num" style={{ color: TIER_COLOUR[customer.tier] }}>
+                      {customer.score}
                     </span>
-                  </td>
-                </tr>
+                    <div className="score-bar">
+                      <span
+                        style={{
+                          width: `${customer.score}%`,
+                          background: TIER_COLOUR[customer.tier],
+                        }}
+                      />
+                    </div>
+                    <span className={`chip chip-${customer.tier}`}>{customer.tier}</span>
+                  </div>
+                  <div>{customer.contract}</div>
+                  <div className="num center">{customer.tenure} mo</div>
+                  <div className="num center">${customer.monthly_charges.toFixed(2)}</div>
+                  <div className="center">
+                    <StageMini stage={customer.outreach_stage} />
+                  </div>
+                </div>
               ))}
-            </tbody>
-          </table>
+            </div>
+          </div>
+          </div>
         )}
 
         {data && data.total_pages > 1 && (
-          <div className="pagination">
-            <button disabled={!data.has_previous} onClick={() => setPage((p) => p - 1)}>
-              Previous
+          <div className="pagination sticky">
+            <button
+              className="page-btn page-nav"
+              disabled={!data.has_previous}
+              onClick={() => setPage((p) => p - 1)}
+            >
+              ‹ Prev
             </button>
-            <span className="muted">
-              Page {data.page} of {data.total_pages.toLocaleString()}
-            </span>
-            <button disabled={!data.has_next} onClick={() => setPage((p) => p + 1)}>
-              Next
+
+            {pageNumbers(data.page, data.total_pages).map((entry, index) =>
+              entry === "…" ? (
+                <span className="page-ellipsis" key={`gap-${index}`}>…</span>
+              ) : (
+                <button
+                  key={entry}
+                  className={`page-btn${entry === data.page ? " active" : ""}`}
+                  onClick={() => setPage(entry)}
+                >
+                  {entry}
+                </button>
+              ),
+            )}
+
+            <button
+              className="page-btn page-nav"
+              disabled={!data.has_next}
+              onClick={() => setPage((p) => p + 1)}
+            >
+              Next ›
             </button>
           </div>
         )}

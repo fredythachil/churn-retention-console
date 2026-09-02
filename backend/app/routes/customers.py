@@ -67,6 +67,31 @@ def list_customers(
     return query.paginate(summaries, page, page_size)
 
 
+@router.get("/summary/stats")
+def customer_stats():
+    tiers: dict[str, int] = {"LOW": 0, "MEDIUM": 0, "HIGH": 0, "CRITICAL": 0}
+    stages: dict[str, int] = {}
+    contracts: dict[str, int] = {}
+    total_score = 0
+
+    for customer in store.all_customers():
+        risk = score_customer(customer)
+        tiers[risk.tier] += 1
+        total_score += risk.score
+
+        stage = (store.get_outreach(customer.customer_id) or OutreachState()).stage.value
+        stages[stage] = stages.get(stage, 0) + 1
+        contracts[customer.contract] = contracts.get(customer.contract, 0) + 1
+
+    total = len(store.all_customers())
+    return {
+        "total": total,
+        "tiers": tiers,
+        "stages": stages,
+        "contracts": contracts,
+        "average_score": round(total_score / total, 1) if total else 0,
+    }
+
 
 @router.get("/{customer_id}", response_model=CustomerDetail)
 def get_customer(customer_id: str):
@@ -113,3 +138,5 @@ async def update_outreach(customer_id: str, update: OutreachUpdate):
         new_state.stage.value,
     )
     return new_state
+
+

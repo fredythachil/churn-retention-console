@@ -3,7 +3,14 @@ from app.models.outreach import OutreachStage
 from app.models.pagination import Page
 from app.models.scoring import CustomerSummary, RiskAssessment
 
-SORT_FIELDS = {"score", "tenure", "monthly_charges", "customer_id"}
+SORT_FIELDS = {
+    "score",
+    "tenure",
+    "monthly_charges",
+    "customer_id",
+    "contract",
+    "outreach_stage",
+}
 
 
 def build_summary(
@@ -17,7 +24,8 @@ def build_summary(
         monthly_charges=customer.monthly_charges,
         score=risk.score,
         tier=risk.tier,
-        outreach_stage=stage.value,
+                outreach_stage=stage.value,
+        top_factors=[f.factor for f in risk.factors if f.points > 0][:3],
     )
 
 

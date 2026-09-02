@@ -24,3 +24,4 @@ class CustomerSummary(BaseModel):
     score: int
     tier: str
     outreach_stage: str
+    top_factors: list[str]

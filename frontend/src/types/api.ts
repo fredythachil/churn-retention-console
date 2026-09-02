@@ -21,6 +21,7 @@ export interface CustomerSummary {
   score: number;
   tier: RiskTier;
   outreach_stage: OutreachStage;
+  top_factors: string[];
 }
 
 export interface Page<T> {

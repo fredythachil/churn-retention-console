@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { getCustomer } from "../api/customers";
 import { FactorBreakdown } from "../components/FactorBreakdown";
 import { OutreachControl } from "../components/OutreachControl";
-import { RiskBadge } from "../components/RiskBadge";
+import { StageFlow } from "../components/StageFlow";
 import { ErrorState, LoadingState } from "../components/StateMessage";
 import type { CustomerDetail, OutreachState } from "../types/api";
 import { STAGE_LABELS, SUB_STAGE_LABELS } from "../types/labels";
@@ -11,8 +11,8 @@ import { STAGE_LABELS, SUB_STAGE_LABELS } from "../types/labels";
 function Field({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <div className="muted" style={{ fontSize: 12 }}>{label}</div>
-      <div>{value}</div>
+      <div className="field-label">{label}</div>
+      <div className="field-value">{value}</div>
     </div>
   );
 }
@@ -60,28 +60,45 @@ export function CustomerDetailView({ customerId }: { customerId: string }) {
 
   const { customer, risk, outreach } = detail;
 
+  const TIER_COLOUR: Record<string, string> = {
+    LOW: "var(--low)",
+    MEDIUM: "var(--medium)",
+    HIGH: "var(--high)",
+    CRITICAL: "var(--critical)",
+  };
+
   return (
     <>
       <div className="panel">
-        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
-          <h2 style={{ margin: 0, fontSize: 18, textTransform: "none", letterSpacing: 0, color: "var(--text)" }}>
-            {customer.customer_id}
-          </h2>
-          <RiskBadge tier={risk.tier} />
-          <span className="muted">Risk score {risk.score} / 100</span>
-          <span className="badge badge-stage" style={{ marginLeft: "auto" }}>
-            {STAGE_LABELS[outreach.stage]}
-            {outreach.sub_stage && ` — ${SUB_STAGE_LABELS[outreach.sub_stage]}`}
-          </span>
+        <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 18 }}>
+          <div>
+            <div style={{ fontFamily: "Outfit", fontSize: 18, fontWeight: 800 }}>
+              {customer.customer_id}
+            </div>
+            <div className="muted" style={{ fontSize: 11 }}>
+              {customer.contract} · {customer.tenure} month
+              {customer.tenure === 1 ? "" : "s"} · ${customer.monthly_charges.toFixed(2)}/mo
+            </div>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginLeft: "auto" }}>
+            <div style={{ textAlign: "right" }}>
+              <div
+                className="num"
+                style={{ fontSize: 30, fontWeight: 900, lineHeight: 1, color: TIER_COLOUR[risk.tier] }}
+              >
+                {risk.score}
+              </div>
+              <div className="muted" style={{ fontSize: 10 }}>RISK SCORE</div>
+            </div>
+            <span className={`chip chip-${risk.tier}`}>{risk.tier}</span>
+          </div>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 12 }}>
-          <Field label="Tenure" value={`${customer.tenure} months`} />
-          <Field label="Contract" value={customer.contract} />
-          <Field label="Monthly charges" value={`$${customer.monthly_charges.toFixed(2)}`} />
-          <Field label="Total charges" value={`$${customer.total_charges.toFixed(2)}`} />
+        <div className="field-grid">
           <Field label="Payment method" value={customer.payment_method} />
           <Field label="Internet" value={customer.internet_service} />
+          <Field label="Total charges" value={`$${customer.total_charges.toFixed(2)}`} />
           <Field label="Tech support" value={customer.tech_support} />
           <Field label="Online security" value={customer.online_security} />
           <Field label="Online backup" value={customer.online_backup} />
@@ -94,12 +111,31 @@ export function CustomerDetailView({ customerId }: { customerId: string }) {
       </div>
 
       <div className="panel">
-        <h2>Why this score</h2>
+        <div className="panel-head">
+          <h2>Outreach stage</h2>
+        </div>
+        <StageFlow stage={outreach.stage} />
+        {outreach.sub_stage && (
+          <div style={{ textAlign: "center", marginTop: 12 }}>
+            <span className={`chip chip-${outreach.stage}`}>
+              {SUB_STAGE_LABELS[outreach.sub_stage]}
+            </span>
+          </div>
+        )}
+      </div>
+
+      <div className="panel">
+        <div className="panel-head">
+          <h2>Why this score</h2>
+          <span className="ph-count">{risk.score} / 100</span>
+        </div>
         <FactorBreakdown risk={risk} />
       </div>
 
       <div className="panel">
-        <h2>Log outreach</h2>
+        <div className="panel-head">
+          <h2>Log outreach</h2>
+        </div>
         <OutreachControl
           customerId={customer.customer_id}
           outreach={outreach}
@@ -108,20 +144,30 @@ export function CustomerDetailView({ customerId }: { customerId: string }) {
       </div>
 
       <div className="panel">
-        <h2>Outreach history</h2>
+        <div className="panel-head">
+          <h2>History</h2>
+          {outreach.history.length > 0 && (
+            <span className="ph-count">{outreach.history.length}</span>
+          )}
+        </div>
+
         {outreach.history.length === 0 ? (
-          <div className="muted">No contact recorded yet.</div>
+          <div className="muted" style={{ fontSize: 12 }}>No contact recorded yet.</div>
         ) : (
           [...outreach.history].reverse().map((event, index) => (
             <div className="history-item" key={index}>
-              <div>
-                <strong>{STAGE_LABELS[event.to_stage]}</strong>
+              <div style={{ marginBottom: 2 }}>
+                <span className={`chip chip-${event.to_stage}`}>
+                  {STAGE_LABELS[event.to_stage]}
+                </span>
                 {event.sub_stage && (
-                  <span className="muted"> — {SUB_STAGE_LABELS[event.sub_stage]}</span>
+                  <span className="muted" style={{ marginLeft: 6, fontSize: 11 }}>
+                    {SUB_STAGE_LABELS[event.sub_stage]}
+                  </span>
                 )}
               </div>
-              {event.note && <div style={{ fontSize: 13 }}>{event.note}</div>}
-              <div className="muted" style={{ fontSize: 12 }}>
+              {event.note && <div style={{ marginBottom: 2 }}>{event.note}</div>}
+              <div className="muted" style={{ fontSize: 10 }}>
                 {new Date(event.occurred_at).toLocaleString()} · from{" "}
                 {STAGE_LABELS[event.from_stage]}
               </div>
