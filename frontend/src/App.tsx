@@ -41,10 +41,6 @@ export default function App() {
 
         <div className="cmd-left">
           {selectedId && <button onClick={backToList}>← Back to list</button>}
-          <div className="cmd-live">
-            <span className="live-dot" />
-            Live
-          </div>
         </div>
       </div>
 

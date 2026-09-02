@@ -4,7 +4,7 @@ import type { OutreachStage } from "../types/api";
 import { STAGE_LABELS } from "../types/labels";
 
 const STAGE_COLOUR: Record<OutreachStage, string> = {
-  NOT_CONTACTED: "#94a3b8",
+  NOT_CONTACTED: "#15803d",
   IN_PROGRESS: "#7c3aed",
   RETAINED: "#059669",
   LOST: "#dc2626",

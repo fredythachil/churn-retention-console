@@ -22,15 +22,27 @@ class OutreachSubStage(str, Enum):
     UNREACHABLE = "UNREACHABLE"
 
 
+# Every stage may transition to itself. A self-transition is how a note or a
+# repeated attempt gets recorded without moving the customer - the history grows,
+# the state does not.
 ALLOWED_TRANSITIONS: dict[OutreachStage, set[OutreachStage]] = {
-    OutreachStage.NOT_CONTACTED: {OutreachStage.IN_PROGRESS},
+    OutreachStage.NOT_CONTACTED: {
+        OutreachStage.NOT_CONTACTED,
+        OutreachStage.IN_PROGRESS,
+    },
     OutreachStage.IN_PROGRESS: {
         OutreachStage.IN_PROGRESS,
         OutreachStage.RETAINED,
         OutreachStage.LOST,
     },
-    OutreachStage.RETAINED: {OutreachStage.IN_PROGRESS},
-    OutreachStage.LOST: {OutreachStage.IN_PROGRESS},
+    OutreachStage.RETAINED: {
+        OutreachStage.RETAINED,
+        OutreachStage.IN_PROGRESS,
+    },
+    OutreachStage.LOST: {
+        OutreachStage.LOST,
+        OutreachStage.IN_PROGRESS,
+    },
 }
 
 

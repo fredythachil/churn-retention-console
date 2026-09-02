@@ -366,16 +366,17 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 /* ---- stage flow ---- */
 .stage-flow {
   position: relative;
-  display: flex;
-  justify-content: space-between;
-  padding: 4px 4px 0;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+
+  padding: 2px 0 0;
 }
 
 .stage-track {
   position: absolute;
-  top: 13px; left: 30px; right: 30px;
+  top: 12px; left: 12.5%; right: 12.5%;
   height: 3px;
-  background: rgba(0, 0, 0, 0.06);
+  background: #e4e9ef;
   border-radius: 2px;
   z-index: 0;
 }
@@ -384,53 +385,74 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
   position: absolute;
   top: 0; left: 0; height: 100%;
   border-radius: 2px;
-  transition: width 0.4s ease, background 0.4s ease;
+  transition: width 0.45s cubic-bezier(0.4, 0, 0.2, 1), background 0.4s ease;
 }
 
 .stage-step {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 7px;
+  gap: 5px;
   position: relative;
-  z-index: 2;
-  flex: 1;
+  z-index: 1;
+  min-width: 0;
+  padding: 0 5px;
 }
 
 .stage-node {
-  width: 26px; height: 26px;
-  border-radius: 50%;
+  height: 25px;
+  padding: 0 6px;
+  width: 100%;
+  border-radius: 20px;
   display: grid; place-items: center;
-  background: #fff;
-  border: 2px solid #e2e8f0;
-  color: var(--text-light);
-  font-size: 11px; font-weight: 800;
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  position: relative;
+  z-index: 2;
+  background: #f6f8fa;
+  border: 1.5px solid #e4e9ef;
+  color: #b6c0cc;
+  font-family: 'Outfit', sans-serif;
+  font-size: 8px;
+  font-weight: 850;
+  text-transform: uppercase;
+  letter-spacing: 0.2px;
   transition: all 0.25s ease;
 }
 
-.stage-step.done .stage-node,
-.stage-step.current .stage-node {
-  border-color: var(--s);
-  color: var(--s);
+.stage-step.done .stage-node {
+  background: color-mix(in srgb, var(--s) 8%, #fff);
+  border-color: color-mix(in srgb, var(--s) 28%, #fff);
+  color: color-mix(in srgb, var(--s) 60%, #94a3b8);
 }
 
+/* current: solid fill plus a pulse so the eye lands on it */
 .stage-step.current .stage-node {
   background: var(--s);
+  border-color: var(--s);
   color: #fff;
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--s) 20%, transparent);
-  transform: scale(1.1);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
+  font-weight: 900;
+  animation: stagePulse 2.4s ease-in-out infinite;
+}
+
+@keyframes stagePulse {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--s) 40%, transparent); }
+  60% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--s) 0%, transparent); }
 }
 
 .stage-name {
   font-family: 'Outfit', sans-serif;
-  font-size: 10px; font-weight: 800;
+  font-size: 8.5px; font-weight: 800;
   text-transform: uppercase; letter-spacing: 0.3px;
   color: var(--text-light);
   text-align: center;
 }
 
 .stage-step.current .stage-name { color: var(--s); }
-.stage-step.done .stage-name { color: var(--text-muted); }
+.stage-step.done .stage-name { color: color-mix(in srgb, var(--s) 70%, #94a3b8); }
 
 /* ---- mini stage flow (list rows) ---- */
 .stage-mini {
@@ -1070,3 +1092,738 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 
 .sort-arrow.active { opacity: 1; color: var(--accent); }
 .row-head span.sortable:hover .sort-arrow { opacity: 0.7; }
+/* ---- detail: three-column dashboard ---- */
+.detail-grid {
+  display: grid;
+  grid-template-columns: 400px minmax(340px, 1fr) 400px;
+  gap: 12px;
+  height: calc(100vh - 96px);
+  overflow: hidden;
+}
+
+.detail-col {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 3px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(37, 99, 235, 0.22) transparent;
+}
+
+/* the activity column never scrolls itself - its inner list does */
+.detail-col.fixed {
+  overflow: hidden;
+}
+
+.detail-col.fixed > .panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+}
+
+.scroll-area {
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+  padding-right: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(37, 99, 235, 0.25) transparent;
+}
+
+/* ---- profile card ---- */
+.profile-name {
+  font-family: 'Outfit', sans-serif;
+  font-size: 19px;
+  font-weight: 850;
+  letter-spacing: -0.2px;
+}
+
+.profile-sub {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-light);
+  margin-top: 2px;
+}
+
+.score-hero {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 0;
+  margin: 12px 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.score-hero-num {
+  font-family: 'Outfit', sans-serif;
+  font-size: 40px;
+  font-weight: 900;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.score-hero-meta { flex: 1; }
+
+/* ---- attribute rows ---- */
+.attr-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 0;
+  font-size: 11.5px;
+  border-bottom: 1px dashed rgba(37, 99, 235, 0.08);
+}
+
+.attr-row:last-child { border-bottom: none; }
+.attr-key { color: var(--text-muted); font-weight: 600; font-size: 12px; }
+.attr-val { font-weight: 800; font-size: 12.5px; }
+
+.flag-yes { color: var(--low); }
+.flag-no { color: var(--critical); }
+
+
+
+/* ---- alternating timeline ---- */
+.timeline {
+  position: relative;
+  padding: 4px 8px 20px;
+}
+
+.timeline-spine {
+  position: absolute;
+  left: 50%;
+  top: 16px;
+  bottom: 0;
+  width: 2.5px;
+  background: linear-gradient(180deg, var(--accent), color-mix(in srgb, var(--accent) 25%, transparent));
+  border-radius: 2px;
+  transform: translateX(-50%);
+}
+
+.day-marker {
+  display: flex;
+  justify-content: center;
+  margin: 0 0 14px;
+  position: relative;
+  z-index: 3;
+}
+
+.day-pill {
+  font-family: 'Outfit', sans-serif;
+  font-size: 9.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  padding: 4px 13px;
+  border-radius: 20px;
+  background: var(--accent);
+  color: #fff;
+  white-space: nowrap;
+  box-shadow: 0 3px 10px var(--accent-glow);
+}
+
+.tl-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 44px 1fr;
+  align-items: center;
+  margin-bottom: 4px;
+  column-gap: 10px;
+}
+
+.tl-node {
+  grid-column: 2;
+  justify-self: center;
+
+  position: relative;
+  z-index: 3;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: #fff;
+  border: 2.5px solid var(--ac);
+  color: var(--ac);
+  font-family: 'Outfit', sans-serif;
+  font-size: 10px;
+  font-weight: 850;
+}
+
+/* short connector from the spine out to the card it belongs to */
+.tl-node::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 20px;
+  height: 2px;
+  background: var(--ac);
+  transform: translateY(-50%);
+}
+
+.tl-row.left .tl-node::after { right: calc(100% - 1px); }
+.tl-row.right .tl-node::after { left: calc(100% - 1px); }
+
+.tl-meta {
+  font-size: 9.5px;
+  color: var(--text-light);
+
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+/* no grid-column overrides - the JSX swaps DOM order per side, so elements fall
+   into columns 1-2-3 naturally and stay aligned */
+.tl-row.left .tl-meta { text-align: left; }
+.tl-row.right .tl-meta { text-align: right; }
+
+.tl-card {
+  border-radius: 11px;
+  padding: 10px 13px;
+
+
+  width: 100%;
+  border: 1.5px solid color-mix(in srgb, var(--ac) 25%, transparent);
+  background: color-mix(in srgb, var(--ac) 7%, #fff);
+  min-width: 0;
+}
+
+.tl-row.left .tl-card { border-right: 3.5px solid var(--ac); }
+.tl-row.right .tl-card { border-left: 3.5px solid var(--ac); }
+
+.tl-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+
+.tl-note {
+  font-size: 12px;
+  line-height: 1.45;
+  margin-top: 5px;
+}
+
+.tl-from {
+  font-size: 10px;
+  color: var(--text-light);
+  margin-top: 5px;
+}
+
+.empty-timeline {
+  text-align: center;
+  padding: 44px 20px;
+  color: var(--text-light);
+  font-size: 12px;
+}
+
+/* ---- choice chips (outreach form) ---- */
+.choice-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.choice {
+  font-family: 'Outfit', sans-serif;
+  font-size: 10.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  cursor: pointer;
+  border: 1.5px solid color-mix(in srgb, var(--cc) 28%, transparent);
+  background: color-mix(in srgb, var(--cc) 7%, #fff);
+  color: var(--cc);
+  transition: all 0.18s ease;
+}
+
+.choice:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--cc) 14%, #fff);
+  border-color: var(--cc);
+  color: var(--cc);
+}
+
+.choice.selected {
+  background: var(--cc);
+  color: #fff;
+  border-color: var(--cc);
+  box-shadow: 0 3px 10px color-mix(in srgb, var(--cc) 35%, transparent);
+}
+
+.choice-label {
+  font-size: 9.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--text-light);
+  margin-bottom: 6px;
+}
+
+/* ---- stage flow: clickable nodes with sub-stage popover ---- */
+.stage-flow-wrap { position: relative; }
+
+.stage-step.clickable { cursor: pointer; }
+
+/* dim only stages that are neither reached nor reachable - the CURRENT stage is
+   locked (you cannot move to yourself from NOT_CONTACTED) but must stay bright */
+/* dim via colour, never opacity - a translucent pill lets the track line show
+   straight through it */
+.stage-step.locked:not(.current):not(.done) {
+  cursor: not-allowed;
+}
+
+.stage-step.locked:not(.current):not(.done) .stage-name {
+  color: #c3ccd6;
+}
+
+.stage-step.clickable:hover .stage-node {
+  transform: scale(1.12);
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--s) 40%, transparent);
+}
+
+.stage-popover {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 10px;
+  z-index: 60;
+  min-width: 176px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 14px 36px rgba(15, 23, 42, 0.16);
+  padding: 6px;
+}
+
+.stage-popover-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 9.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--text-light);
+  padding: 6px 10px 6px;
+}
+
+.stage-option {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: none;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-main);
+  cursor: pointer;
+}
+
+.stage-option:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--sc) 13%, #fff);
+  color: var(--sc);
+}
+
+.stage-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+}
+
+.attr-section {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 10.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--accent);
+  margin: 14px 0 5px;
+  padding-bottom: 4px;
+  border-bottom: 1.5px solid var(--border);
+}
+
+.attr-section:first-child { margin-top: 0; }
+
+.attr-row {
+  padding: 7px 0;
+  font-size: 12.5px;
+}
+
+/* left column: attribute card fills the remaining height */
+/* side columns: last card fills the remaining height */
+.detail-col:first-child > .panel:last-child,
+.detail-col:last-child > .panel:last-child {
+  flex: 1;
+  min-height: 0;
+}
+
+/* the height-filling cards scroll internally rather than pushing the page */
+.detail-col:first-child > .panel:last-child,
+.detail-col:last-child > .panel:last-child {
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(37, 99, 235, 0.22) transparent;
+}
+
+.detail-col:first-child > .panel:last-child::-webkit-scrollbar,
+.detail-col:last-child > .panel:last-child::-webkit-scrollbar {
+  width: 5px;
+}
+
+.detail-col:first-child > .panel:last-child::-webkit-scrollbar-thumb,
+.detail-col:last-child > .panel:last-child::-webkit-scrollbar-thumb {
+  background: rgba(37, 99, 235, 0.22);
+  border-radius: 3px;
+}
+
+/* columns themselves no longer scroll - their inner cards do */
+.detail-col { overflow: hidden; }
+
+/* ---- note composer in activity panel ---- */
+.note-composer {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  padding: 10px 0 12px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 4px;
+}
+
+.note-composer textarea {
+  flex: 1;
+  resize: none;
+  min-height: 34px;
+  border-radius: 10px;
+  font-size: 12px;
+}
+
+.btn-icon {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: none;
+  display: grid;
+  place-items: center;
+  font-size: 17px;
+  line-height: 1;
+  background: linear-gradient(135deg, var(--accent), var(--accent-deep));
+  color: #fff;
+  box-shadow: 0 3px 10px var(--accent-glow);
+  cursor: pointer;
+  transition: transform 0.18s ease;
+}
+
+.btn-icon:hover:not(:disabled) {
+  transform: translateY(-1px);
+  color: #fff;
+}
+
+.btn-icon:disabled {
+  background: var(--border);
+  box-shadow: none;
+  color: var(--text-light);
+  cursor: not-allowed;
+}
+
+/* ---- activity header bar ---- */
+.activity-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 0 12px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 6px;
+}
+
+.activity-bar .panel-head {
+  margin-bottom: 0;
+  flex-shrink: 0;
+}
+
+.activity-bar .note-composer {
+  flex: 1;
+  padding: 0;
+  border: none;
+  margin: 0;
+  min-width: 0;
+}
+
+.activity-bar .note-composer textarea {
+  min-height: 32px;
+  padding: 7px 12px;
+  border-radius: 20px;
+  background: var(--bg-tint);
+}
+
+.activity-bar .note-composer textarea:focus { background: #fff; }
+
+.activity-bar .btn-icon {
+  width: 32px;
+  height: 32px;
+  font-size: 16px;
+}
+
+/* ---- timeline card: typed header ---- */
+.tl-type {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.tl-kind {
+  font-family: 'Outfit', sans-serif;
+  font-size: 8.5px;
+  font-weight: 850;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--ac) 16%, #fff);
+  color: var(--ac);
+  white-space: nowrap;
+}
+
+.tl-action {
+  font-family: 'Outfit', sans-serif;
+  font-size: 8.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--text-light);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tl-body {
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.45;
+  color: var(--text-main);
+}
+
+.tl-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 3px;
+}
+
+/* ---- current sub-stage row ---- */
+.substage-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.substage-label {
+  font-family: 'Outfit', sans-serif;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+}
+
+.substage-pill {
+  font-family: 'Outfit', sans-serif;
+  font-size: 10.5px;
+  font-weight: 800;
+  padding: 5px 13px;
+  border-radius: 20px;
+  white-space: nowrap;
+  background: color-mix(in srgb, var(--sp) 12%, #fff);
+  border: 1.5px solid color-mix(in srgb, var(--sp) 35%, transparent);
+  color: var(--sp);
+}
+
+.substage-pill.none {
+  background: var(--bg-tint);
+  border-color: var(--border);
+  color: var(--text-light);
+}
+
+/* notes are amber regardless of the stage they were logged against - a note is
+   a different kind of event from a stage change */
+.tl-card.note {
+  border-color: rgba(217, 119, 6, 0.28);
+  background: rgba(254, 243, 199, 0.55);
+}
+
+.tl-row.left .tl-card.note { border-right-color: #d97706; }
+.tl-row.right .tl-card.note { border-left-color: #d97706; }
+
+.tl-card.note .tl-kind {
+  background: rgba(217, 119, 6, 0.16);
+  color: #b45309;
+}
+
+.attr-section svg {
+  width: 13px;
+  height: 13px;
+  opacity: 0.85;
+}
+
+/* Columns fall out of DOM order (card,node,meta on the left; meta,node,card on
+   the right) - no grid-column overrides, which is what kept the two sides from
+   lining up. */
+.tl-row.left .tl-meta { text-align: left; }
+.tl-row.right .tl-meta { text-align: right; }
+
+/* ---- toast ---- */
+.toast {
+  position: fixed;
+  bottom: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 16px;
+  border-radius: 12px;
+  background: var(--critical);
+  color: #fff;
+  font-size: 12.5px;
+  font-weight: 600;
+  box-shadow: 0 10px 30px rgba(220, 38, 38, 0.3);
+  animation: toastIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  max-width: 480px;
+}
+
+.toast button {
+  all: unset;
+  cursor: pointer;
+  opacity: 0.75;
+  font-size: 15px;
+  line-height: 1;
+}
+
+.toast button:hover { opacity: 1; }
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translate(-50%, 12px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+/* later day markers need breathing room above them; the first sits flush with
+   the top of the spine */
+.timeline > div:not(:first-child) > .day-marker {
+  margin-top: 18px;
+}
+
+/* ---- factor breakdown ---- */
+.factor {
+  padding: 10px 11px;
+  border-radius: 10px;
+  margin-bottom: 7px;
+  background: color-mix(in srgb, var(--fc) 5%, #fff);
+  border: 1px solid color-mix(in srgb, var(--fc) 16%, transparent);
+  border-left: 3px solid var(--fc);
+}
+
+.factor.zero {
+  background: var(--bg-tint);
+  border-color: var(--border);
+  border-left-color: #cbd5e1;
+}
+
+.factor-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.factor-name {
+  font-family: 'Outfit', sans-serif;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--text-main);
+}
+
+.factor-value {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.factor-points {
+  font-family: 'Outfit', sans-serif;
+  font-size: 12.5px;
+  font-weight: 850;
+  color: var(--fc);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.factor.zero .factor-points { color: var(--text-light); }
+
+.factor-track {
+  height: 5px;
+  border-radius: 20px;
+  background: color-mix(in srgb, var(--fc) 12%, #eef1f5);
+  overflow: hidden;
+}
+
+.factor-track span {
+  display: block;
+  height: 100%;
+  border-radius: 20px;
+  background: var(--fc);
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.factor-reason {
+  font-size: 10.5px;
+  line-height: 1.5;
+  color: var(--text-muted);
+  margin-top: 6px;
+}
+
+/* the two outcomes are a fork, not a continuation - the unreached one must not
+   look like a step the customer passed through */
+.stage-step.outcome:not(.current) .stage-node {
+  position: relative;
+  z-index: 2;
+  background: #fff;
+  border-color: #dde3ea;
+  color: #94a3b8;
+}
+
+/* a stage you can move to must never look faded, even if it was already
+   visited - reopening from LOST or RETAINED goes back through IN_PROGRESS.
+   :not(.current) so this never overrides the solid fill on the current stage. */
+.stage-step.clickable:not(.current) .stage-node {
+  border-color: color-mix(in srgb, var(--s) 45%, transparent);
+  color: var(--s);
+  background: color-mix(in srgb, var(--s) 8%, #fff);
+}
+
+.stage-step.clickable:not(.current) .stage-name { color: var(--s); }
+
+/* the step that owns an open popover must outrank its siblings, or a sibling
+   pill with a higher z-index sits on top of the popover and eats the clicks */
+.stage-step:has(.stage-popover) {
+  z-index: 50;
+}

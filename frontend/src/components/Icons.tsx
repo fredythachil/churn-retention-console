@@ -58,3 +58,25 @@ export const IconSearch = () => (
     <path d="M10.6 10.6 13.6 13.6" />
   </svg>
 );
+
+export const IconCard = () => (
+  <svg {...props}>
+    <rect x="2" y="4" width="12" height="8.5" rx="1.6" />
+    <path d="M2 7h12" />
+  </svg>
+);
+
+export const IconShield = () => (
+  <svg {...props}>
+    <path d="M8 2 13 4v4c0 3-2.2 5.2-5 6-2.8-.8-5-3-5-6V4z" />
+    <path d="M6 8l1.5 1.5L10.5 6.5" />
+  </svg>
+);
+
+export const IconHome = () => (
+  <svg {...props}>
+    <path d="M2.6 7 8 2.6 13.4 7" />
+    <path d="M4 6.4v6.6h8V6.4" />
+    <path d="M6.6 13V9.4h2.8V13" />
+  </svg>
+);

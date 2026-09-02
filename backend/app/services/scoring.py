@@ -39,7 +39,7 @@ def _score_tenure(customer: Customer) -> FactorContribution:
         if upper_bound is None or customer.tenure <= upper_bound:
             return FactorContribution(
                 factor="tenure",
-                value=f"{customer.tenure} months{'s' if customer.tenure != 1 else ''}",
+                value=f"{customer.tenure} month{'s' if customer.tenure != 1 else ''}",
                 points=points,
                 max_points=TENURE_RULE["weight"],
                 reason=reason,

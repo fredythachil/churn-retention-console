@@ -42,10 +42,12 @@ export const SUB_STAGES_FOR_STAGE: Record<OutreachStage, OutreachSubStage[]> = {
   RETAINED: ["OFFER_ACCEPTED", "NO_OFFER_NEEDED"],
   LOST: ["PRICE", "SERVICE", "UNREACHABLE"],
 };
+// Mirrors ALLOWED_TRANSITIONS on the backend. Every stage self-transitions so a
+// note or a sub-stage correction can be logged without moving the customer.
 
 export const NEXT_STAGES: Record<OutreachStage, OutreachStage[]> = {
-  NOT_CONTACTED: ["IN_PROGRESS"],
+  NOT_CONTACTED: ["NOT_CONTACTED", "IN_PROGRESS"],
   IN_PROGRESS: ["IN_PROGRESS", "RETAINED", "LOST"],
-  RETAINED: ["IN_PROGRESS"],
-  LOST: ["IN_PROGRESS"],
+  RETAINED: ["RETAINED", "IN_PROGRESS"],
+  LOST: ["LOST", "IN_PROGRESS"],
 };
