@@ -21,7 +21,18 @@ const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
 export function DonutPanel({ title, caption, slices, activeKey, onSliceClick }: Props) {
   const total = slices.reduce((sum, slice) => sum + slice.value, 0);
-  let offset = 0;
+
+  // Each segment's dash length, plus the offset where it starts - the running
+  // total of everything before it.
+  const segments: { slice: DonutSlice; dash: number; offset: number }[] = [];
+  for (const slice of slices) {
+    const previous = segments[segments.length - 1];
+    segments.push({
+      slice,
+      dash: (total ? slice.value / total : 0) * CIRCUMFERENCE,
+      offset: previous ? previous.offset + previous.dash : 0,
+    });
+  }
 
   return (
     <div className="panel">
@@ -33,27 +44,21 @@ export function DonutPanel({ title, caption, slices, activeKey, onSliceClick }: 
       <div className="donut-wrap">
         <div className="donut">
           <svg width="118" height="118" viewBox="0 0 118 118">
-            {slices.map((slice) => {
-              const fraction = total ? slice.value / total : 0;
-              const dash = fraction * CIRCUMFERENCE;
-              const segment = (
-                <circle
-                  key={slice.key}
-                  className={`donut-seg${activeKey && activeKey !== slice.key ? " dim" : ""}`}
-                  cx="59"
-                  cy="59"
-                  r={RADIUS}
-                  stroke={slice.colour}
-                  strokeDasharray={`${dash} ${CIRCUMFERENCE - dash}`}
-                  strokeDashoffset={-offset}
-                  onClick={() => onSliceClick(activeKey === slice.key ? "" : slice.key)}
-                >
-                  <title>{`${slice.label}: ${slice.value.toLocaleString()}`}</title>
-                </circle>
-              );
-              offset += dash;
-              return segment;
-            })}
+            {segments.map(({ slice, dash, offset }) => (
+              <circle
+                key={slice.key}
+                className={`donut-seg${activeKey && activeKey !== slice.key ? " dim" : ""}`}
+                cx="59"
+                cy="59"
+                r={RADIUS}
+                stroke={slice.colour}
+                strokeDasharray={`${dash} ${CIRCUMFERENCE - dash}`}
+                strokeDashoffset={-offset}
+                onClick={() => onSliceClick(activeKey === slice.key ? "" : slice.key)}
+              >
+                <title>{`${slice.label}: ${slice.value.toLocaleString()}`}</title>
+              </circle>
+            ))}
           </svg>
 
           <div className="donut-centre">

@@ -1,7 +1,7 @@
 import { Fragment } from "react";
 
-import type { OutreachStage } from "../types/api";
-import { STAGE_LABELS } from "../types/labels";
+import type { OutreachStage, OutreachSubStage } from "../types/api";
+import { STAGE_LABELS, SUB_STAGE_LABELS } from "../types/labels";
 
 const STAGE_COLOUR: Record<OutreachStage, string> = {
   NOT_CONTACTED: "#15803d",
@@ -10,52 +10,56 @@ const STAGE_COLOUR: Record<OutreachStage, string> = {
   LOST: "#dc2626",
 };
 
-// Short labels because three sit inline in a table cell. The pill marking the
-// current position carries the full stage name.
-const SHORT_NAMES: Record<OutreachStage, string> = {
-  NOT_CONTACTED: "New",
-  IN_PROGRESS: "Working",
-  RETAINED: "Saved",
-  LOST: "Lost",
-};
+interface Props {
+  stage: OutreachStage;
+  subStage: OutreachSubStage | null;
+}
 
-export function StageMini({ stage }: { stage: OutreachStage }) {
-  // LOST is an alternative ending to RETAINED, not a step after it, so it
-  // replaces the final node rather than adding one.
-  const steps: OutreachStage[] =
-    stage === "LOST"
-      ? ["NOT_CONTACTED", "IN_PROGRESS", "LOST"]
-      : ["NOT_CONTACTED", "IN_PROGRESS", "RETAINED"];
+export function StageMini({ stage, subStage }: Props) {
+  const path: OutreachStage[] = ["NOT_CONTACTED", "IN_PROGRESS"];
+  const outcomes: OutreachStage[] = ["RETAINED", "LOST"];
+  const steps = [...path, ...outcomes];
 
-  const currentIndex = steps.indexOf(stage);
-  const fillPercent = (currentIndex / (steps.length - 1)) * 100;
+  const reachedOutcome = outcomes.includes(stage);
+  const currentIndex = reachedOutcome ? path.length : path.indexOf(stage);
+  const fillIndex = reachedOutcome ? steps.indexOf(stage) : currentIndex;
 
   return (
     <div
       className="stage-mini"
       style={{ "--m": STAGE_COLOUR[stage] } as React.CSSProperties}
-      title={`${STAGE_LABELS[stage]} — step ${currentIndex + 1} of ${steps.length}`}
+      title={
+        subStage
+          ? `${STAGE_LABELS[stage]} - ${SUB_STAGE_LABELS[subStage]}`
+          : STAGE_LABELS[stage]
+      }
     >
       <div className="stage-mini-track">
-        <div className="stage-mini-fill" style={{ width: `${fillPercent}%` }} />
+        <div
+          className="stage-mini-fill"
+          style={{ width: `${(fillIndex / (steps.length - 1)) * 100}%` }}
+        />
       </div>
 
       {steps.map((step, index) => {
-        const done = index <= currentIndex;
-        const current = index === currentIndex;
-        const stepClass = ["stage-mini-step", done && "done", current && "current"]
-          .filter(Boolean)
-          .join(" ");
+        const isOutcome = outcomes.includes(step);
+        const current = isOutcome ? step === stage : index === currentIndex;
+        const done = isOutcome ? false : index < currentIndex;
 
         return (
           <Fragment key={step}>
-            <div className={stepClass}>
-              {current ? (
-                <span className="stage-mini-pill">{STAGE_LABELS[step]}</span>
+            <div
+              className={`stage-mini-step${done ? " done" : ""}${current ? " current" : ""}`}
+              style={{ "--sm": STAGE_COLOUR[step] } as React.CSSProperties}
+            >
+              {/* the pill carries the sub-stage; the label below is always the
+                  main stage, so the two never say the same thing */}
+              {current && subStage ? (
+                <span className="stage-mini-pill">{SUB_STAGE_LABELS[subStage]}</span>
               ) : (
                 <div className="stage-mini-dot" />
               )}
-              <span className="stage-mini-name">{SHORT_NAMES[step]}</span>
+              <span className="stage-mini-name">{STAGE_LABELS[step]}</span>
             </div>
           </Fragment>
         );

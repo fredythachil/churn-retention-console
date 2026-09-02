@@ -10,13 +10,12 @@ from app.models.pagination import Page
 from app.models.scoring import CustomerSummary, RiskAssessment
 from app.services import query
 from app.services.outreach import InvalidTransition, apply_transition
-from app.services.scoring import score_customer
-
-
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/customers", tags=["customers"])
+
+
 class CustomerDetail(BaseModel):
     customer: Customer
     risk: RiskAssessment
@@ -41,17 +40,8 @@ def list_customers(
     sort_by: str = "score",
     descending: bool = True,
 ):
-    summaries = [
-        query.build_summary(
-            customer,
-            score_customer(customer),
-            (store.get_outreach(customer.customer_id) or OutreachState()).stage,
-        )
-        for customer in store.all_customers()
-    ]
-
     summaries = query.filter_summaries(
-        summaries,
+        store.all_summaries(),
         tier=tier,
         contract=contract,
         outreach_stage=outreach_stage,
@@ -74,16 +64,14 @@ def customer_stats():
     contracts: dict[str, int] = {}
     total_score = 0
 
-    for customer in store.all_customers():
-        risk = score_customer(customer)
-        tiers[risk.tier] += 1
-        total_score += risk.score
+    summaries = store.all_summaries()
+    for summary in summaries:
+        tiers[summary.tier] += 1
+        total_score += summary.score
+        stages[summary.outreach_stage] = stages.get(summary.outreach_stage, 0) + 1
+        contracts[summary.contract] = contracts.get(summary.contract, 0) + 1
 
-        stage = (store.get_outreach(customer.customer_id) or OutreachState()).stage.value
-        stages[stage] = stages.get(stage, 0) + 1
-        contracts[customer.contract] = contracts.get(customer.contract, 0) + 1
-
-    total = len(store.all_customers())
+    total = len(summaries)
     return {
         "total": total,
         "tiers": tiers,
@@ -100,13 +88,14 @@ def get_customer(customer_id: str):
         logger.info("Customer not found: %s", customer_id)
         raise HTTPException(status_code=404, detail=f"Customer {customer_id} not found")
 
+    risk = store.get_risk(customer_id)
     outreach = store.get_outreach(customer_id)
     if outreach is None:
         outreach = OutreachState()
 
     return CustomerDetail(
         customer=customer,
-        risk=score_customer(customer),
+        risk=risk,
         outreach=outreach,
     )
 
@@ -115,7 +104,8 @@ def get_customer(customer_id: str):
 async def update_outreach(customer_id: str, update: OutreachUpdate):
     customer_id = customer_id.strip()
 
-    if store.get_customer(customer_id) is None:
+    customer = store.get_customer(customer_id)
+    if customer is None:
         raise HTTPException(status_code=404, detail=f"Customer {customer_id} not found")
 
     async with store.lock():
@@ -129,7 +119,12 @@ async def update_outreach(customer_id: str, update: OutreachUpdate):
             logger.info("Rejected transition for %s: %s", customer_id, exc)
             raise HTTPException(status_code=409, detail=str(exc)) from exc
 
-        store.set_outreach(customer_id, new_state)
+        risk = store.get_risk(customer_id)
+        store.set_outreach(
+            customer_id,
+            new_state,
+            query.build_summary(customer, risk, new_state),
+        )
 
     logger.info(
         "Outreach updated for %s: %s -> %s",

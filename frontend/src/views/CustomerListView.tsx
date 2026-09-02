@@ -13,8 +13,30 @@ import { STAGE_LABELS, TIER_LABELS } from "../types/labels";
 
 const PAGE_SIZE = 10;
 
+const TIER_COLOUR: Record<string, string> = {
+  LOW: "var(--low)",
+  MEDIUM: "var(--medium)",
+  HIGH: "var(--high)",
+  CRITICAL: "var(--critical)",
+};
+
+// Always render an arrow so every column reads as sortable - dimmed when the
+// column is not the active sort.
+function SortArrow({ field, sortBy, descending }: { field: string; sortBy: string; descending: boolean }) {
+  const active = sortBy === field;
+  return <span className="sort-arrow">{active && !descending ? "↑" : "↓"}</span>;
+}
+
+// Condensed page list: first, last, the current neighbourhood, and ellipses.
+function pageNumbers(current: number, total: number): (number | "…")[] {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  if (current <= 4) return [1, 2, 3, 4, 5, "…", total];
+  if (current >= total - 3) return [1, "…", total - 4, total - 3, total - 2, total - 1, total];
+  return [1, "…", current - 1, current, current + 1, "…", total];
+}
+
 interface Props {
-  onSelect: (customerId: string) => void;
+  onSelect: (customerId: string, pageIds: string[]) => void;
 }
 
 export function CustomerListView({ onSelect }: Props) {
@@ -95,31 +117,6 @@ export function CustomerListView({ onSelect }: Props) {
       setDescending(true);
     }
     setPage(1);
-  }
-
-  // Always render an arrow so every column reads as sortable - dimmed when the
-  // column is not the active sort.
-  function SortArrow({ field }: { field: string }) {
-    const active = sortBy === field;
-    return (
-      <span className={`sort-arrow`}>
-        {active && !descending ? "↑" : "↓"}
-      </span>
-    );
-  }
-
-  const TIER_COLOUR: Record<string, string> = {
-    LOW: "var(--low)",
-    MEDIUM: "var(--medium)",
-    HIGH: "var(--high)",
-    CRITICAL: "var(--critical)",
-  };
-  
-  function pageNumbers(current: number, total: number): (number | "…")[] {
-    if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
-    if (current <= 4) return [1, 2, 3, 4, 5, "…", total];
-    if (current >= total - 3) return [1, "…", total - 4, total - 3, total - 2, total - 1, total];
-    return [1, "…", current - 1, current, current + 1, "…", total];
   }
 
   return (
@@ -244,23 +241,23 @@ export function CustomerListView({ onSelect }: Props) {
               <div className="row-head">
                 <span />
                 <span className="sortable" onClick={() => toggleSort("customer_id")}>
-                  <IconUser />Customer<SortArrow field="customer_id" />
+                  <IconUser />Customer<SortArrow field="customer_id" sortBy={sortBy} descending={descending} />
                 </span>
                 <span>Drivers</span>
                 <span className="sortable" onClick={() => toggleSort("score")}>
-                  <IconGauge />Risk score<SortArrow field="score" />
+                  <IconGauge />Risk score<SortArrow field="score" sortBy={sortBy} descending={descending} />
                 </span>
                 <span className="sortable" onClick={() => toggleSort("contract")}>
-                  <IconContract />Contract<SortArrow field="contract" />
+                  <IconContract />Contract<SortArrow field="contract" sortBy={sortBy} descending={descending} />
                 </span>
                 <span className="sortable center" onClick={() => toggleSort("tenure")}>
-                  <IconClock />Tenure<SortArrow field="tenure" />
+                  <IconClock />Tenure<SortArrow field="tenure" sortBy={sortBy} descending={descending} />
                 </span>
                 <span className="sortable center" onClick={() => toggleSort("monthly_charges")}>
-                  <IconMoney />Monthly<SortArrow field="monthly_charges" />
+                  <IconMoney />Monthly<SortArrow field="monthly_charges" sortBy={sortBy} descending={descending} />
                 </span>
                 <span className="sortable center" onClick={() => toggleSort("outreach_stage")}>
-                  <IconFlow />Outreach<SortArrow field="outreach_stage" />
+                  <IconFlow />Outreach<SortArrow field="outreach_stage" sortBy={sortBy} descending={descending} />
                 </span>
               </div>
               <div className="rows">
@@ -268,7 +265,12 @@ export function CustomerListView({ onSelect }: Props) {
                 <div
                   className="row"
                   key={customer.customer_id}
-                  onClick={() => onSelect(customer.customer_id)}
+                  onClick={() =>
+                      onSelect(
+                        customer.customer_id,
+                        data.items.map((item) => item.customer_id),
+                      )
+                    }
                 >
                   <div
                     className="row-mark"
@@ -294,7 +296,7 @@ export function CustomerListView({ onSelect }: Props) {
                   <div className="num center">{customer.tenure} mo</div>
                   <div className="num center">${customer.monthly_charges.toFixed(2)}</div>
                   <div className="center">
-                    <StageMini stage={customer.outreach_stage} />
+                    <StageMini stage={customer.outreach_stage} subStage={customer.outreach_sub_stage} />
                   </div>
                 </div>
               ))}

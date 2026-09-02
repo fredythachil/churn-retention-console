@@ -1,0 +1,8 @@
+# Never copy the host's node_modules over the ones npm ci just installed -
+# native binaries are built for the host OS and will not run in the image.
+node_modules
+dist
+.env
+.env.*
+Dockerfile
+.dockerignore

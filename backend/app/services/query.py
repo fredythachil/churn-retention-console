@@ -1,5 +1,5 @@
 from app.models.customer import Customer
-from app.models.outreach import OutreachStage
+from app.models.outreach import OutreachState
 from app.models.pagination import Page
 from app.models.scoring import CustomerSummary, RiskAssessment
 
@@ -14,7 +14,7 @@ SORT_FIELDS = {
 
 
 def build_summary(
-    customer: Customer, risk: RiskAssessment, stage: OutreachStage
+    customer: Customer, risk: RiskAssessment, outreach: OutreachState
 ) -> CustomerSummary:
     return CustomerSummary(
         customer_id=customer.customer_id,
@@ -24,7 +24,8 @@ def build_summary(
         monthly_charges=customer.monthly_charges,
         score=risk.score,
         tier=risk.tier,
-                outreach_stage=stage.value,
+        outreach_stage=outreach.stage.value,
+        outreach_sub_stage=outreach.sub_stage.value if outreach.sub_stage else None,
         top_factors=[f.factor for f in risk.factors if f.points > 0][:3],
     )
 

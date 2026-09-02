@@ -8,6 +8,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.data_access import store
 from app.routes import customers, model
+from app.services.query import build_summary
+from app.services.scoring import score_customer
 from app.core.logging import request_logging_middleware
 
 logging.basicConfig(level=logging.INFO)
@@ -15,7 +17,7 @@ logging.basicConfig(level=logging.INFO)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    await asyncio.to_thread(store.initialise)
+    await asyncio.to_thread(store.initialise, score_customer, build_summary)
     yield
 
 

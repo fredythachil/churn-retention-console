@@ -80,3 +80,12 @@ export const IconHome = () => (
     <path d="M6.6 13V9.4h2.8V13" />
   </svg>
 );
+
+export const IconGrid = () => (
+  <svg viewBox="0 0 16 16" fill="currentColor" stroke="none">
+    <rect x="2" y="2" width="5" height="5" rx="1.4" />
+    <rect x="9" y="2" width="5" height="5" rx="1.4" />
+    <rect x="2" y="9" width="5" height="5" rx="1.4" />
+    <rect x="9" y="9" width="5" height="5" rx="1.4" />
+  </svg>
+);

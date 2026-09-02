@@ -1,0 +1,10 @@
+-r requirements.txt
+
+# tests
+pytest==8.3.4
+httpx==0.28.1
+
+# analysis notebook only - the service itself uses the stdlib csv module
+pandas==2.2.3
+jupyter==1.1.1
+ipykernel==6.29.5
